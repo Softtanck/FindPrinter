@@ -31,9 +31,19 @@ public class PrinterSearchHelper {
 
     public static final String TAG = "Tanck";
 
+    private int START_IP = 1;//开始IP
+
+    private int END_IP = 254;// 结束IP
+
     private static final int TIME_OUT = 5000;//timeout
 
     private static final int PORT = 9100;//printer
+
+    private static int mTimes = 0; // 搜索次数.
+
+    private static final int SUCCESS_SCAN = 0x1;// 搜索成功
+
+    private static final int FAIL_SCAN = 0x2; // 搜索失败
 
     public static PrinterSearchHelper instance;
 
@@ -184,33 +194,44 @@ public class PrinterSearchHelper {
 
     public void startScan() {
 
+
         if (isStart)
             return;
-
+        mTimes = 0;
         isStart = true;
 
         if (null == mHandler)
             mHandler = new Handler() {
                 @Override
                 public void handleMessage(Message msg) {
-                    Log.d(TAG, "扫描到了:" + ((Printer) msg.obj).ip);
-                    list.add((BaseDevice) msg.obj);
+                    int code = msg.what;
+                    ++mTimes;
+                    switch (code) {
+                        case SUCCESS_SCAN:
+                            Log.d(TAG, "扫描到了:" + ((Printer) msg.obj).ip);
+                            list.add((BaseDevice) msg.obj);
+                            break;
+                        case FAIL_SCAN:
+                            break;
+                    }
+                    // 保证所有线程都执行完毕后.
+                    if (END_IP - START_IP + 1 <= mTimes) {
+                        if (null != listener) {
+                            listener.scanOver(list);
+                        }
+                    }
                 }
             };
 
         Printer printer = getInfo();
 
-        for (int i = 1; i <= 254; i++) {
+        for (int i = START_IP; i <= END_IP; i++) {
             // 添加一个任务
             String starIp = getStarOrEndIp(printer.ip, i, true);
             addTask(starIp, "---");
         }
 
         isStart = false;
-
-        if (null != listener) {
-            listener.scanOver(list);
-        }
 
     }
 
@@ -225,16 +246,13 @@ public class PrinterSearchHelper {
         Runnable runnable = new Runnable() {
             @Override
             public void run() {
-                Printer printer = new Printer();
+                Printer printer = null;
                 if (sendPacket(ip)) { // success
+                    printer = new Printer();
                     printer.ip = ip;
                     printer.mac = mac;
-                    if (null != mHandler) {
-                        Message msg = Message.obtain();
-                        msg.obj = printer;
-                        mHandler.sendMessage(msg);
-                    }
                 }
+                sendMsg(printer);
             }
         };
 
@@ -250,6 +268,17 @@ public class PrinterSearchHelper {
         mPoolSemaphore.release();//信号量 -1
     }
 
+    private void sendMsg(Printer printer) {
+        if (null != mHandler)
+            if (null == printer) { // 失败的
+                mHandler.sendEmptyMessage(FAIL_SCAN);
+            } else {
+                Message msg = Message.obtain();
+                msg.obj = printer;
+                msg.what = SUCCESS_SCAN;
+                mHandler.sendMessage(msg);
+            }
+    }
 
     /**
      * 获取任务
@@ -310,7 +339,6 @@ public class PrinterSearchHelper {
             client.connect(sa, TIME_OUT);
             return true;
         } catch (IOException e) {
-            Log.d(TAG, e.getMessage());
             e.printStackTrace();
         }
         return false;

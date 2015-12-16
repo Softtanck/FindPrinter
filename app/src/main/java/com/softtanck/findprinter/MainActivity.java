@@ -2,6 +2,7 @@ package com.softtanck.findprinter;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 
 import com.softtanck.findprinter.bean.BaseDevice;
@@ -24,7 +25,9 @@ public class MainActivity extends AppCompatActivity implements PrinterSearchHelp
         printerSearchUtils.startScan();
     }
 
+    // 注意这儿扫描完毕,集合可能为空,需要自己判断
     @Override
     public <T extends BaseDevice> void scanOver(List<T> t) {
+        Log.d("Tanck", "扫描完毕");
     }
 }
