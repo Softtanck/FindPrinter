@@ -21,7 +21,7 @@ public class MainActivity extends AppCompatActivity implements PrinterSearchHelp
     public void scan(View view) {
         PrinterSearchHelper printerSearchUtils = PrinterSearchHelper.getInstance(MainActivity.this, 15);
         printerSearchUtils.setScanListener(this);
-        printerSearchUtils.getPrinterOnNetWork();
+        printerSearchUtils.startScan();
     }
 
     @Override

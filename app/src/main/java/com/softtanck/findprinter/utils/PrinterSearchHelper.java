@@ -182,7 +182,7 @@ public class PrinterSearchHelper {
     }
 
 
-    public void getPrinterOnNetWork() {
+    public void startScan() {
 
         if (isStart)
             return;
