@@ -245,11 +245,7 @@ public class PrinterSearchHelper {
 
         Printer printer = getInfo();
 
-        for (
-                int i = START_IP;
-                i <= END_IP; i++)
-
-        {
+        for (int i = START_IP; i <= END_IP; i++) {
             // 添加一个任务
             String starIp = getStarOrEndIp(printer.ip, i, true);
             addTask(starIp, "---");
