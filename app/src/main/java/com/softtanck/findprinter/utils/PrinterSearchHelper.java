@@ -197,6 +197,7 @@ public class PrinterSearchHelper {
 
         if (isStart)
             return;
+        list.clear();
         mTimes = 0;
         isStart = true;
 
@@ -209,7 +210,9 @@ public class PrinterSearchHelper {
                     switch (code) {
                         case SUCCESS_SCAN:
                             Log.d(TAG, "扫描到了:" + ((Printer) msg.obj).ip);
-                            list.add((BaseDevice) msg.obj);
+                            synchronized (PrinterSearchHelper.class) {
+                                list.add((BaseDevice) msg.obj);
+                            }
                             break;
                         case FAIL_SCAN:
                             break;
