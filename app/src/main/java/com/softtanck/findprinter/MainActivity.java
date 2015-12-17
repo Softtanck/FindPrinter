@@ -33,4 +33,9 @@ public class MainActivity extends AppCompatActivity implements PrinterSearchHelp
             Log.d("Tanck", t.get(0).ip + "---size:" + t.size());
         }
     }
+
+    @Override
+    public void currentPosition(int progress) {
+        Log.d("Tanck", "当前进度-----" + progress);
+    }
 }

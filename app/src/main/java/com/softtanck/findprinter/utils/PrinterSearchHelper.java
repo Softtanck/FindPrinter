@@ -110,7 +110,20 @@ public class PrinterSearchHelper {
      * 扫描监听
      */
     public interface ScanListener {
+        /**
+         * 扫描完毕
+         *
+         * @param t
+         * @param <T>
+         */
         public <T extends BaseDevice> void scanOver(List<T> t);
+
+        /**
+         * 当前位置
+         *
+         * @param progress
+         */
+        public void currentPosition(int progress);
     }
 
     /**
@@ -205,6 +218,7 @@ public class PrinterSearchHelper {
             mHandler = new Handler() {
                 @Override
                 public void handleMessage(Message msg) {
+
                     int code = msg.what;
                     ++mTimes;
                     switch (code) {
@@ -217,6 +231,9 @@ public class PrinterSearchHelper {
                         case FAIL_SCAN:
                             break;
                     }
+                    if (null != listener) {
+                        listener.currentPosition((int) ((1.00f * mTimes) / END_IP * 100));
+                    }
                     // 保证所有线程都执行完毕后.
                     if (END_IP - START_IP + 1 <= mTimes) {
                         if (null != listener) {
@@ -228,7 +245,11 @@ public class PrinterSearchHelper {
 
         Printer printer = getInfo();
 
-        for (int i = START_IP; i <= END_IP; i++) {
+        for (
+                int i = START_IP;
+                i <= END_IP; i++)
+
+        {
             // 添加一个任务
             String starIp = getStarOrEndIp(printer.ip, i, true);
             addTask(starIp, "---");
@@ -244,6 +265,7 @@ public class PrinterSearchHelper {
      * @param ip  被扫描IP
      * @param mac 被扫描Mac地址
      */
+
     private synchronized void addTask(final String ip, final String mac) {
 
         Runnable runnable = new Runnable() {
