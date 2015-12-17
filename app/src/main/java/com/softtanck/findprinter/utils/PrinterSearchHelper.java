@@ -35,7 +35,7 @@ public class PrinterSearchHelper {
 
     private int END_IP = 254;// 结束IP
 
-    private static final int TIME_OUT = 5000;//timeout
+    private static final int TIME_OUT = 1000;//timeout
 
     private static final int PORT = 9100;//printer
 
