@@ -49,7 +49,7 @@ public class PrinterSearchHelper {
 
     private final static int FAIL_SCAN = 0x2; // 搜索失败
 
-    private List<String> ips = new ArrayList<>();//ip被检测的ip集合
+    private List<String> macs = new ArrayList<>();//Mac被检测的Mac集合
 
     private final static String DEFAULT_MAC = "00:00:00:00:00:00";
 
@@ -222,11 +222,11 @@ public class PrinterSearchHelper {
 
         if (isStart)
             return;
-        ips.clear();
+        macs.clear();
         list.clear();
         mTimes = 0;
         isStart = true;
-        ips.add("10:e6:ae");//添加
+        macs.add("10:e6:ae");//添加
 
         if (null == mHandler)
             mHandler = new Handler() {
@@ -397,7 +397,7 @@ public class PrinterSearchHelper {
      * @return
      */
     private boolean isContain(String ip) {
-        for (String s : ips) {
+        for (String s : macs) {
             if (ip.startsWith(s))
                 return true;
         }
@@ -430,23 +430,23 @@ public class PrinterSearchHelper {
     /**
      * 添加一个过滤Ip
      *
-     * @param ip
+     * @param mac
      */
-    public void addIp(String ip) {
-        if (!ips.contains(ip))
-            ips.add(ip);
+    public void addMac(String mac) {
+        if (!macs.contains(mac))
+            macs.add(mac);
     }
 
     /**
      * 添加需要过滤Ip集合
      *
-     * @param remoteIps
+     * @param remoteMacs
      */
-    public void addIps(List<String> remoteIps) {
-        if (null == remoteIps)
+    public void addMacs(List<String> remoteMacs) {
+        if (null == remoteMacs)
             return;
-        for (String ip : remoteIps) {
-            addIp(ip);
+        for (String ip : remoteMacs) {
+            addMac(ip);
         }
     }
 }
