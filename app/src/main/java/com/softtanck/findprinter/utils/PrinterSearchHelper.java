@@ -445,8 +445,8 @@ public class PrinterSearchHelper {
     public void addMacs(List<String> remoteMacs) {
         if (null == remoteMacs)
             return;
-        for (String ip : remoteMacs) {
-            addMac(ip);
+        for (String mac : remoteMacs) {
+            addMac(mac);
         }
     }
 }
