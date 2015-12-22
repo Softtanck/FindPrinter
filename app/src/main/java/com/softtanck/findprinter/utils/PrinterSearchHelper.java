@@ -282,7 +282,7 @@ public class PrinterSearchHelper {
             @Override
             public void run() {
                 Printer printer = null;
-                if (sendPacket(ip) ){//&& isContain(ip)) { // success
+                if (sendPacket(ip)) {//&& isContain(ip)) { // success
                     printer = new Printer();
                     printer.ip = ip;
                     printer.mac = mac;
@@ -427,4 +427,26 @@ public class PrinterSearchHelper {
         return false;
     }
 
+    /**
+     * 添加一个过滤Ip
+     *
+     * @param ip
+     */
+    public void addIp(String ip) {
+        if (!ips.contains(ip))
+            ips.add(ip);
+    }
+
+    /**
+     * 添加需要过滤Ip集合
+     *
+     * @param remoteIps
+     */
+    public void addIps(List<String> remoteIps) {
+        if (null == remoteIps)
+            return;
+        for (String ip : remoteIps) {
+            addIp(ip);
+        }
+    }
 }
