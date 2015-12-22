@@ -282,7 +282,7 @@ public class PrinterSearchHelper {
             @Override
             public void run() {
                 Printer printer = null;
-                if (sendPacket(ip)) {//&& isContain(ip)) { // success
+                if (sendPacket(ip) && isContain(ip)) { // success
                     printer = new Printer();
                     printer.ip = ip;
                     printer.mac = mac;
