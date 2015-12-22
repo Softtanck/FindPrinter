@@ -30,7 +30,7 @@ public class MainActivity extends AppCompatActivity implements PrinterSearchHelp
     public <T extends BaseDevice> void scanOver(List<T> t) {
         Log.d("Tanck", "扫描完毕");
         if (0 < t.size()) {
-            Log.d("Tanck", t.get(0).ip + "---size:" + t.size());
+            Log.d("Tanck", t.get(0).ip + "--" + t.get(0).mac + "--size:" + t.size());
         }
     }
 

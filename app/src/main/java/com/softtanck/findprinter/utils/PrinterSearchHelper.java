@@ -11,6 +11,8 @@ import android.util.Log;
 import com.softtanck.findprinter.bean.BaseDevice;
 import com.softtanck.findprinter.bean.Printer;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
@@ -23,6 +25,8 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by Tanck on 2015/12/16.
@@ -35,15 +39,23 @@ public class PrinterSearchHelper {
 
     private int END_IP = 254;// 结束IP
 
-    private static final int TIME_OUT = 1000;//timeout
+    private final static int TIME_OUT = 5000;//timeout
 
-    private static final int PORT = 9100;//printer
+    private final static int PORT = 9100;//printer
 
     private static int mTimes = 0; // 搜索次数.
 
-    private static final int SUCCESS_SCAN = 0x1;// 搜索成功
+    private final static int SUCCESS_SCAN = 0x1;// 搜索成功
 
-    private static final int FAIL_SCAN = 0x2; // 搜索失败
+    private final static int FAIL_SCAN = 0x2; // 搜索失败
+
+    private List<String> ips = new ArrayList<>();//ip被检测的ip集合
+
+    private final static String DEFAULT_MAC = "00:00:00:00:00:00";
+
+    private final static String MAC_RE = "^%s\\s+0x1\\s+0x2\\s+([:0-9a-fA-F]+)\\s+\\*\\s+\\w+$";
+
+    private final static int BUFF = 8 * 1024;
 
     public static PrinterSearchHelper instance;
 
@@ -210,9 +222,11 @@ public class PrinterSearchHelper {
 
         if (isStart)
             return;
+        ips.clear();
         list.clear();
         mTimes = 0;
         isStart = true;
+        ips.add("10:e6:ae");//添加
 
         if (null == mHandler)
             mHandler = new Handler() {
@@ -248,7 +262,7 @@ public class PrinterSearchHelper {
         for (int i = START_IP; i <= END_IP; i++) {
             // 添加一个任务
             String starIp = getStarOrEndIp(printer.ip, i, true);
-            addTask(starIp, "---");
+            addTask(starIp, getHardwareAddress(starIp));
         }
 
         isStart = false;
@@ -268,7 +282,7 @@ public class PrinterSearchHelper {
             @Override
             public void run() {
                 Printer printer = null;
-                if (sendPacket(ip)) { // success
+                if (sendPacket(ip) ){//&& isContain(ip)) { // success
                     printer = new Printer();
                     printer.ip = ip;
                     printer.mac = mac;
@@ -341,6 +355,54 @@ public class PrinterSearchHelper {
                 + ((ip >> 24) & 0xFF);
     }
 
+
+    /**
+     * 根据IP获取其mac地址
+     *
+     * @param ip
+     * @return
+     */
+    private String getHardwareAddress(String ip) {
+        String hw = DEFAULT_MAC;
+        try {
+            if (ip != null) {
+                String ptrn = String.format(MAC_RE, ip.replace(".", "\\."));
+                Pattern pattern = Pattern.compile(ptrn);
+                BufferedReader bufferedReader = new BufferedReader(new FileReader("/proc/net/arp"), BUFF);
+                String line;
+                Matcher matcher;
+                while ((line = bufferedReader.readLine()) != null) {
+                    matcher = pattern.matcher(line);
+                    if (matcher.matches()) {
+                        hw = matcher.group(1);
+                        break;
+                    }
+                }
+                bufferedReader.close();
+            } else {
+                Log.e(TAG, "ip is null");
+            }
+        } catch (IOException e) {
+            Log.e(TAG, "Can't open/read file ARP: " + e.getMessage());
+            return hw;
+        }
+        return hw;
+    }
+
+
+    /**
+     * 判断是否为指定的Mac
+     *
+     * @param ip
+     * @return
+     */
+    private boolean isContain(String ip) {
+        for (String s : ips) {
+            if (ip.startsWith(s))
+                return true;
+        }
+        return false;
+    }
 
     /**
      * 发包.
