@@ -39,7 +39,7 @@ public class PrinterSearchHelper {
 
     private int END_IP = 254;// 结束IP
 
-    private final static int TIME_OUT = 5000;//timeout
+    private final static int TIME_OUT = 1000;//timeout
 
     private final static int PORT = 9100;//printer
 
@@ -222,7 +222,6 @@ public class PrinterSearchHelper {
 
         if (isStart)
             return;
-        macs.clear();
         list.clear();
         mTimes = 0;
         isStart = true;
@@ -251,6 +250,7 @@ public class PrinterSearchHelper {
                     // 保证所有线程都执行完毕后.
                     if (END_IP - START_IP + 1 <= mTimes) {
                         if (null != listener) {
+                            macs.clear();
                             listener.scanOver(list);
                         }
                     }
@@ -402,6 +402,7 @@ public class PrinterSearchHelper {
      */
     private boolean isContain(String mac) {
         for (String s : macs) {
+            Log.d(TAG, "isContain: " + s);
             if (mac.startsWith(s))
                 return true;
         }

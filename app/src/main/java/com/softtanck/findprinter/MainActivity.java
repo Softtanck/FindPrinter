@@ -22,6 +22,7 @@ public class MainActivity extends AppCompatActivity implements PrinterSearchHelp
     public void scan(View view) {
         PrinterSearchHelper printerSearchUtils = PrinterSearchHelper.getInstance(MainActivity.this, 50);
         printerSearchUtils.setScanListener(this);
+        printerSearchUtils.addMac("00:1a:4b");
         printerSearchUtils.startScan();
     }
 
