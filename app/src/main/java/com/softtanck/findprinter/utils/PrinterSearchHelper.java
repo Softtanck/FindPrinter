@@ -226,7 +226,7 @@ public class PrinterSearchHelper {
         list.clear();
         mTimes = 0;
         isStart = true;
-        macs.add("10:e6:ae");//添加
+//        macs.add("10:e6:ae");//添加
 
         if (null == mHandler)
             mHandler = new Handler() {
@@ -262,7 +262,7 @@ public class PrinterSearchHelper {
         for (int i = START_IP; i <= END_IP; i++) {
             // 添加一个任务
             String starIp = getStarOrEndIp(printer.ip, i, true);
-            addTask(starIp, getHardwareAddress(starIp));
+            addTask(starIp);
         }
 
         isStart = false;
@@ -272,20 +272,24 @@ public class PrinterSearchHelper {
     /**
      * 添加一个任务
      *
-     * @param ip  被扫描IP
-     * @param mac 被扫描Mac地址
+     * @param ip 被扫描IP
      */
 
-    private synchronized void addTask(final String ip, final String mac) {
+    private synchronized void addTask(final String ip) {
 
         Runnable runnable = new Runnable() {
             @Override
             public void run() {
                 Printer printer = null;
-                if (sendPacket(ip) && isContain(mac)) { // success
-                    printer = new Printer();
-                    printer.ip = ip;
-                    printer.mac = mac;
+                String mac = getHardwareAddress(ip);
+                if (sendPacket(ip)) { // success
+                    if (0 < macs.size()) { // 证明需要过滤
+                        if (isContain(mac)) {
+                            printer = new Printer(ip, mac);
+                        }
+                    } else {
+                        printer = new Printer(ip, mac);
+                    }
                 }
                 sendMsg(printer);
             }
