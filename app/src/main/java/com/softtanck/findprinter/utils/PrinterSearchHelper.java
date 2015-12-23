@@ -282,7 +282,7 @@ public class PrinterSearchHelper {
             @Override
             public void run() {
                 Printer printer = null;
-                if (sendPacket(ip) && isContain(ip)) { // success
+                if (sendPacket(ip) && isContain(mac)) { // success
                     printer = new Printer();
                     printer.ip = ip;
                     printer.mac = mac;
@@ -393,12 +393,12 @@ public class PrinterSearchHelper {
     /**
      * 判断是否为指定的Mac
      *
-     * @param ip
+     * @param mac
      * @return
      */
-    private boolean isContain(String ip) {
+    private boolean isContain(String mac) {
         for (String s : macs) {
-            if (ip.startsWith(s))
+            if (mac.startsWith(s))
                 return true;
         }
         return false;
