@@ -22,7 +22,6 @@ public class MainActivity extends AppCompatActivity implements PrinterSearchHelp
     public void scan(View view) {
         PrinterSearchHelper printerSearchUtils = PrinterSearchHelper.getInstance(MainActivity.this, 50);
         printerSearchUtils.setScanListener(this);
-        printerSearchUtils.addMac("00:1a:4b");
         printerSearchUtils.startScan();
     }
 
@@ -31,7 +30,7 @@ public class MainActivity extends AppCompatActivity implements PrinterSearchHelp
     public <T extends BaseDevice> void scanOver(List<T> t) {
         Log.d("Tanck", "扫描完毕");
         if (0 < t.size()) {
-            Log.d("Tanck", t.get(0).ip + "--" + t.get(0).mac + "--size:" + t.size());
+            Log.d("Tanck", t.get(1).ip + "--" + t.get(1).mac + "--size:" + t.size());
         }
     }
 
