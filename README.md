@@ -1,3 +1,3 @@
 # FindPrinter
-find printer with wifi .
+find printer with wifi support snmp.
 
