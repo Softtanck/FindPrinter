@@ -6,6 +6,7 @@ import android.util.Log;
 import android.view.View;
 
 import com.softtanck.findprinter.bean.BaseDevice;
+import com.softtanck.findprinter.bean.Printer;
 import com.softtanck.findprinter.utils.PrinterSearchHelper;
 
 import java.util.List;
@@ -30,7 +31,9 @@ public class MainActivity extends AppCompatActivity implements PrinterSearchHelp
     public <T extends BaseDevice> void scanOver(List<T> t) {
         Log.d("Tanck", "扫描完毕");
         if (0 < t.size()) {
-            Log.d("Tanck", t.get(1).ip + "--" + t.get(1).mac + "--size:" + t.size());
+            Log.d("Tanck", "scanOver: " + "--size:" + t.size());
+            for (int i = 0; i < t.size(); i++)
+                Log.d("Tanck", t.get(i).ip + "--" + t.get(i).mac + "--" + ((Printer) t.get(i)).getName());
         }
     }
 

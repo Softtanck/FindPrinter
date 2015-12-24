@@ -11,6 +11,19 @@ import android.util.Log;
 import com.softtanck.findprinter.bean.BaseDevice;
 import com.softtanck.findprinter.bean.Printer;
 
+import org.snmp4j.CommunityTarget;
+import org.snmp4j.PDU;
+import org.snmp4j.Snmp;
+import org.snmp4j.TransportMapping;
+import org.snmp4j.event.ResponseEvent;
+import org.snmp4j.mp.SnmpConstants;
+import org.snmp4j.smi.Integer32;
+import org.snmp4j.smi.OID;
+import org.snmp4j.smi.OctetString;
+import org.snmp4j.smi.UdpAddress;
+import org.snmp4j.smi.VariableBinding;
+import org.snmp4j.transport.DefaultUdpTransportMapping;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -22,6 +35,7 @@ import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Vector;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
@@ -33,15 +47,38 @@ import java.util.regex.Pattern;
  */
 public class PrinterSearchHelper {
 
-    public static final String TAG = "Tanck";
+    /**
+     * 获取网络设备名字的OID
+     */
+    public final static String W1110_NETWORK = ".1.3.6.1.4.1.10917.1.5.1.1.17.1.0";
+
+    /**
+     * 获取共享设备名字的OID
+     */
+    public final static String BROTHRE_QL_1050_LE = ".1.3.6.1.4.1.77.1.2.29.1.1.18.66.114.111.116.104.101.114.32.81.76.45.49.48.53.48.32.76.69";
+
+    public final static String NO_OBJECT = "noSuchObject";
+
+    public final static String TAG = "Tanck";
+
+    /**
+     * 获取设备指定的OID
+     */
+    private String[] mSnmpShareOids = {W1110_NETWORK, BROTHRE_QL_1050_LE};
 
     private int START_IP = 1;//开始IP
 
     private int END_IP = 254;// 结束IP
 
-    private final static int TIME_OUT = 1000;//timeout
+    private final static int TIME_OUT = 3000;//timeout
 
     private final static int PORT = 9100;//printer
+
+    private final static int SNMP_PORT = 161; //snmp协议端口
+
+    private final static int snmpVersion = SnmpConstants.version2c;
+
+    private final static String community = "public";
 
     private static int mTimes = 0; // 搜索次数.
 
@@ -282,13 +319,33 @@ public class PrinterSearchHelper {
             public void run() {
                 Printer printer = null;
                 String mac = getHardwareAddress(ip);
-                if (sendPacket(ip)) { // success
-                    if (0 < macs.size()) { // 证明需要过滤
-                        if (isContain(mac)) {
-                            printer = new Printer(ip, mac);
-                        }
-                    } else {
+
+//                if (sendPacketBySocketForScan(ip)) { // success
+//                    if (0 < macs.size()) { // 证明需要过滤
+//                        if (isContain(mac)) {
+//                            printer = new Printer(ip, mac);
+//                        }
+//                    } else {
+//                        printer = new Printer(ip, mac);
+//                    }
+//                }
+                String tempName;
+                for (int i = 0; i < mSnmpShareOids.length; i++) {
+                    tempName = sendSnmpOIDForScan(ip, mSnmpShareOids[i]);
+                    if (null != tempName) {//证明网络中有共享的
+                        Log.d(TAG, "通过SNMP协议找到了:" + tempName);
                         printer = new Printer(ip, mac);
+                        printer.setName(tempName);
+                    } else if (null == printer) { //证明Snmp中没有此打印机,扫描其端口
+                        if (sendPacketBySocketForScan(ip)) { // success
+                            if (0 < macs.size()) { // 证明需要过滤
+                                if (isContain(mac)) {
+                                    printer = new Printer(ip, mac);
+                                }
+                            } else {
+                                printer = new Printer(ip, mac);
+                            }
+                        }
                     }
                 }
                 sendMsg(printer);
@@ -366,7 +423,7 @@ public class PrinterSearchHelper {
      * @param ip
      * @return
      */
-    private String getHardwareAddress(String ip) {
+    private synchronized String getHardwareAddress(String ip) {
         String hw = DEFAULT_MAC;
         try {
             if (ip != null) {
@@ -415,7 +472,7 @@ public class PrinterSearchHelper {
      * @param ip
      * @return
      */
-    private boolean sendPacket(String ip) {
+    private boolean sendPacketBySocketForScan(String ip) {
         Log.d(TAG, "开始扫描:" + ip);
         try {
             InetAddress serverAddress = InetAddress.getByName(ip);//
@@ -430,6 +487,67 @@ public class PrinterSearchHelper {
             e.printStackTrace();
         }
         return false;
+    }
+
+
+    /**
+     * 通过snmp协议发包
+     *
+     * @param ip
+     * @param oid
+     * @return
+     */
+    private String sendSnmpOIDForScan(String ip, String oid) {
+        try {
+            String devicesName;
+            TransportMapping transport = new DefaultUdpTransportMapping();
+            transport.listen();
+
+            // Create Target Address object
+            CommunityTarget comtarget = new CommunityTarget();
+            comtarget.setCommunity(new OctetString(community));
+            comtarget.setVersion(snmpVersion);
+            comtarget.setAddress(new UdpAddress(ip + "/" + SNMP_PORT));
+            comtarget.setRetries(1);//retry次数
+            comtarget.setTimeout(TIME_OUT);
+
+            // Create the PDU object
+            PDU pdu = new PDU();
+            pdu.add(new VariableBinding(new OID(oid)));
+            pdu.setType(PDU.GET);
+            pdu.setRequestID(new Integer32(1));
+
+            // Create Snmp object for sending data to Agent
+            Snmp snmp = new Snmp(transport);
+
+//            Log.d(TAG, "sendSnmpOIDForScan: Sending Request to Agent...");
+            ResponseEvent response = snmp.get(pdu, comtarget);
+
+            // Process Agent Response
+            if (response != null) {
+//                Log.d(TAG, "sendSnmpOIDForScan: Got Response from Agent ");
+                PDU responsePDU = response.getResponse();
+
+                if (responsePDU != null) {
+//                    int errorStatus = responsePDU.getErrorStatus();
+//                    int errorIndex = responsePDU.getErrorIndex();
+//                    String errorStatusText = responsePDU.getErrorStatusText();
+
+                    if (responsePDU.getErrorStatus() == PDU.noError) {
+                        Vector vector = responsePDU.getVariableBindings();
+                        devicesName = vector.get(0).toString();
+                        devicesName = devicesName.replace(oid.substring(1) + " = ", "");
+                        Log.d(TAG, "sendSnmpOIDForScan: " + devicesName);
+                        return devicesName.equals(NO_OBJECT) ? null : devicesName;
+                    }
+                }
+            }
+            snmp.close();
+        } catch (Exception e) {
+            Log.d(TAG, "sendSnmpOIDForScan: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return null;
     }
 
     /**
