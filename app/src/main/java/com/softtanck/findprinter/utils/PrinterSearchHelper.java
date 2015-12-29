@@ -70,7 +70,7 @@ public class PrinterSearchHelper {
 
     private int END_IP = 254;// 结束IP
 
-    private final static int TIME_OUT = 3000;//timeout
+    private final static int TIME_OUT = 1000;//timeout
 
     private final static int PORT = 9100;//printer
 
@@ -336,18 +336,20 @@ public class PrinterSearchHelper {
                         Log.d(TAG, "通过SNMP协议找到了:" + tempName);
                         printer = new Printer(ip, mac);
                         printer.setName(tempName);
-                    } else if (null == printer) { //证明Snmp中没有此打印机,扫描其端口
-                        if (sendPacketBySocketForScan(ip)) { // success
-                            if (0 < macs.size()) { // 证明需要过滤
-                                if (isContain(mac)) {
-                                    printer = new Printer(ip, mac);
-                                }
-                            } else {
-                                printer = new Printer(ip, mac);
-                            }
-                        }
                     }
                 }
+//                    } else if (null == printer) { //证明Snmp中没有此打印机,扫描其端口
+//                        if (sendPacketBySocketForScan(ip)) { // success
+//                            if (0 < macs.size()) { // 证明需要过滤
+//                                if (isContain(mac)) {
+//                                    printer = new Printer(ip, mac);
+//                                }
+//                            } else {
+//                                printer = new Printer(ip, mac);
+//                            }
+//                        }
+//                    }
+//                }
                 sendMsg(printer);
             }
         };
